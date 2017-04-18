@@ -10,10 +10,10 @@ WHITE = (255, 255, 255)
 BLUE = (50, 50, 255)
 
 # Screen dimensions
-SCREEN_WIDTH = 400
-SCREEN_HEIGHT = 400
-div_x = 10
-div_y = 10
+SCREEN_WIDTH = 300
+SCREEN_HEIGHT = 300
+div_x = 5
+div_y = 5
 
 
 class Player(pygame.sprite.Sprite):
@@ -23,7 +23,7 @@ class Player(pygame.sprite.Sprite):
         super().__init__()
 
         # Set height, width
-        self.image = pygame.Surface([20, 20])
+        self.image = pygame.Surface([10, 10])
         self.image.fill(WHITE)
         self.rect = self.image.get_rect()
         self.rect.y = y
@@ -103,6 +103,7 @@ class Player(pygame.sprite.Sprite):
         if self.state != div_x+2 and self.sanity != 1:
             self.reward = 1
         if self.state == div_x+2:
+            self.reward = -3000
             self.rect.y = self.start_y
             self.rect.x = self.start_x
         self.state = math.floor(self.parti_y*(self.rect.y/SCREEN_HEIGHT))*self.parti_x+math.ceil(self.parti_x*(self.rect.x/SCREEN_WIDTH))

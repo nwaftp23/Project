@@ -7,8 +7,8 @@ from copy import copy
 A = 4
 ns = div_x*div_y
 n = A*(div_x*div_y)
-s_x = 325
-s_y = 350
+s_x = 225
+s_y = 250
 
 #State and Action Agregation
 def aggre(s , a):
@@ -53,11 +53,13 @@ def convert_act(a, player):
 
 
 def PG_CVAR(s, alpha , beta, theta, var, lamb):
-    N=1
-    eps = 1e-3
-    for i in range(1000):
-        print('Episode number', i+1)
+    N=2
+    eps = 1e-2
+    for i in range(500):
+        rew_l=[]
+        grad_l=[]
         for j in range(N):
+            print('Episode number', N*i+j+1)
             rew=0
             state = copy(s)
             # Call this function so the Pygame library can initialize itself
@@ -67,20 +69,20 @@ def PG_CVAR(s, alpha , beta, theta, var, lamb):
             all_sprite_list = pygame.sprite.Group()
             wall_list = pygame.sprite.Group()
             a = np.random.uniform(0,1)
-            trump = Wall(10, 100 , 300, 15)
+            trump = Wall(10, 150 , 200, 15)
             if a < .1:
                 wall_list.add(trump)
                 all_sprite_list.add(trump)
-            wall = Wall(10, 0, 390, 10)
+            wall = Wall(10, 0, 290, 10)
             wall_list.add(wall)
             all_sprite_list.add(wall)
-            wall = Wall(0, 0, 10, 400)
+            wall = Wall(0, 0, 10, 300)
             wall_list.add(wall)
             all_sprite_list.add(wall)
-            wall = Wall(10, 390, 390, 10)
+            wall = Wall(10, 290, 290, 10)
             wall_list.add(wall)
             all_sprite_list.add(wall)
-            wall = Wall(390, 10, 10, 380)
+            wall = Wall(290, 10, 10, 280)
             wall_list.add(wall)
             all_sprite_list.add(wall)
             # Create the player paddle object
@@ -89,20 +91,19 @@ def PG_CVAR(s, alpha , beta, theta, var, lamb):
             all_sprite_list.add(player)
             clock = pygame.time.Clock()
             grad=np.zeros(n)
-            step_1 = .1 / (i+1)
-            step_2 = .1 / (i+1)**0.85
-            step_3 = .05 / (i+1)**0.7
-            lambmax = 5000
+            step_1 = .000000000001 / (i+1)
+            step_2 = .000000000001 / (i+1)**0.85
+            step_3 = .0000000000005 / (i+1)**0.7
+            lambmax = 50
             r=0
-            while state != 10:
+            while state != div_x+2:
                 # Produces random wall after hit
                 if r == 100:
                     a = np.random.uniform(0,1)
                     wall_list.remove(trump)
                     all_sprite_list.remove(trump)
                     if a < .1:
-                        print('yes wall')
-                        trump = Wall(10, 100 , 300, 15)
+                        trump = Wall(10, 150 , 200, 15)
                         wall_list.add(trump)
                         all_sprite_list.add(trump)
                 a = softmax(theta , state)
@@ -118,27 +119,39 @@ def PG_CVAR(s, alpha , beta, theta, var, lamb):
                 pygame.display.flip()
                 clock.tick(60)
                 rew += r
-        right1 = (lamb/((1-alpha)*N))*int(rew >= var)
-        v =  lambda x: 1/2*((var-step_3*(lamb-right1))-x)**2
-        va = minimize(v, var,bounds= ((-100,100),))
-        right2 = 1/N*grad*rew + (lamb/((1-alpha)*N))*grad*(rew-var)*int(rew >= var)
+            grad_l.append(grad)
+            rew_l.append(rew)
+        print(rew_l)
+        indic=[int(r >= var) for r in rew_l]
+        step_1 = 1/((i+1)**(3/4))
+        right1 = (lamb/((1-alpha)*N))*sum(indic)
+        v =  lambda x: 1/2*((var-step_1*(lamb-right1))-x)**2
+        va = minimize(v, var, bounds=((-100,100),))
+        step_2 = 1/((i+1)**(4/5))
+        right2 = 1/N*sum([grad_l[i]*rew_l[i] for i in range(len(grad_l))]) + (lamb/((1-alpha)*N))*sum([grad_l[i]*(rew_l[i]-var)*indic[i] for i in range(len(grad_l))])
         t = lambda x: 1/2*np.linalg.norm(theta-step_2*right2-x,2)**2
-        bnds = tuple([(-50,50)]*n)
+        bnds = tuple([(-2,2)]*n)
         ta = minimize(t, theta, bounds=bnds)
-        right3 = var-beta+1/((1-alpha)*N)*(rew-var)*int(rew >= var)
-        l = lambda x: 1/2*(lamb-step_1*right3-x)**2
+        step_3 = 1/((i+1))
+        right3 = var-beta+1/((1-alpha)*N)*sum([(rew_l[i]-var)*indic[i] for i in range(len(grad_l))]) 
+        l = lambda x: 1/2*(lamb+step_3*right3-x)**2
         la = minimize(l, lamb, bounds=((0,lambmax),))
         var = va.x
         theta = ta.x
         lamb = la.x
         if abs(lamb-lambmax) < eps:
             lambmax=2*lambmax
+        print(theta[0::4])
+        print(theta[1::4])
+        print(theta[2::4])
+        print(theta[3::4])
     return theta, var, lamb
 
 
 def PG(s, theta):
     for i in range(100):
         grad_l=[]
+        rew=[]
         print('Episode number', i+1)
         state = copy(s)
         pygame.init()
@@ -151,9 +164,6 @@ def PG(s, theta):
         if a < .1:
             wall_list.add(trump)
             all_sprite_list.add(trump)
-        wall = Wall(10, 100 , 300, 25)
-        wall_list.add(wall)
-        all_sprite_list.add(wall)
         wall = Wall(10, 0, 390, 10)
         wall_list.add(wall)
         all_sprite_list.add(wall)
@@ -196,11 +206,12 @@ def PG(s, theta):
             pygame.display.flip()
             clock.tick(60)
             rew.append(-1*player.reward)
+            r=player.reward
             grad_l.append(grad)
         T = len(grad_l)
         for j in range(T):
             #step_1 = 0.5/(i+1)
-            step_1 = .1 / (j+1)
+            step_1 = .001 / (j+1)
             theta += step_1*sum(rew[j:T])*grad_l[j]
         print(theta)
     return theta
