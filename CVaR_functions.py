@@ -54,11 +54,11 @@ def convert_act(a, player):
 
 def PG_CVAR(s, alpha , beta, theta, var, lamb):
     N=1
+    eps = 1e-3
     for i in range(1000):
-        rew=[]
-        grad_l=[]
         print('Episode number', i+1)
         for j in range(N):
+            rew=0
             state = copy(s)
             # Call this function so the Pygame library can initialize itself
             pygame.init()
@@ -92,7 +92,6 @@ def PG_CVAR(s, alpha , beta, theta, var, lamb):
             step_1 = .1 / (i+1)
             step_2 = .1 / (i+1)**0.85
             step_3 = .05 / (i+1)**0.7
-            step_4 = .05 / (i+1)**0.55
             lambmax = 5000
             r=0
             while state != 10:
@@ -118,30 +117,27 @@ def PG_CVAR(s, alpha , beta, theta, var, lamb):
                 all_sprite_list.draw(screen)
                 pygame.display.flip()
                 clock.tick(60)
-            grad_l.append(grad)
-            rew.append(player.reward)
-        indic=[int(r >= var) for r in rew]
-        step_1 = 1/((i+1)**(3/4))
-        right1 = (lamb/((1-alpha)*N))*sum(indic)
-        v =  lambda x: 1/2*((var-step_1*(lamb-right1))-x)**2
-        va = minimize(v, var)
-        step_2 = 1/((i+1)**(4/5))
-        right2 = 1/N*sum([grad_l[i]*rew[i] for i in range(len(grad_l))]) + (lamb/((1-alpha)*N))*sum([grad_l[i]*(rew[i]-var)*indic[i] for i in range(len(grad_l))])
+                rew += r
+        right1 = (lamb/((1-alpha)*N))*int(rew >= var)
+        v =  lambda x: 1/2*((var-step_3*(lamb-right1))-x)**2
+        va = minimize(v, var,bounds= ((-100,100),))
+        right2 = 1/N*grad*rew + (lamb/((1-alpha)*N))*grad*(rew-var)*int(rew >= var)
         t = lambda x: 1/2*np.linalg.norm(theta-step_2*right2-x,2)**2
-        ta = minimize(t, theta)
-        step_3 = 1/((i+1))
-        right3 = var-beta+1/((1-alpha)*N)*sum([(rew[i]-var)*indic[i] for i in range(len(grad_l))])
-        l = lambda x: 1/2*(lamb-step_3*right3-x)**2
-        la = minimize(l, lamb)
+        bnds = tuple([(-50,50)]*n)
+        ta = minimize(t, theta, bounds=bnds)
+        right3 = var-beta+1/((1-alpha)*N)*(rew-var)*int(rew >= var)
+        l = lambda x: 1/2*(lamb-step_1*right3-x)**2
+        la = minimize(l, lamb, bounds=((0,lambmax),))
         var = va.x
         theta = ta.x
         lamb = la.x
+        if abs(lamb-lambmax) < eps:
+            lambmax=2*lambmax
     return theta, var, lamb
 
 
 def PG(s, theta):
     for i in range(100):
-        rew=[]
         grad_l=[]
         print('Episode number', i+1)
         state = copy(s)
@@ -150,6 +146,11 @@ def PG(s, theta):
         pygame.display.set_caption('Collision Avoidance')
         all_sprite_list = pygame.sprite.Group()
         wall_list = pygame.sprite.Group()
+        a = np.random.uniform(0,1)
+        trump = Wall(10, 100 , 300, 15)
+        if a < .1:
+            wall_list.add(trump)
+            all_sprite_list.add(trump)
         wall = Wall(10, 100 , 300, 25)
         wall_list.add(wall)
         all_sprite_list.add(wall)
@@ -171,7 +172,18 @@ def PG(s, theta):
         all_sprite_list.add(player)
         clock = pygame.time.Clock()
         grad=np.zeros(n)
+        r=0
         while state != div_x+2:
+            # Produces random wall after hit
+            if r == 100:
+                a = np.random.uniform(0,1)
+                wall_list.remove(trump)
+                all_sprite_list.remove(trump)
+                if a < .1:
+                    print('yes wall')
+                    trump = Wall(10, 100 , 300, 15)
+                    wall_list.add(trump)
+                    all_sprite_list.add(trump)
             a = softmax(theta , state)
             vec = np.zeros(n)
             vec[(state-1)*A:(state-1)*A+A]=a[1]
@@ -183,12 +195,12 @@ def PG(s, theta):
             all_sprite_list.draw(screen)
             pygame.display.flip()
             clock.tick(60)
-            rew.append(player.reward)
+            rew.append(-1*player.reward)
             grad_l.append(grad)
         T = len(grad_l)
         for j in range(T):
             #step_1 = 0.5/(i+1)
-            step_1 = 10**-4
-            theta -= step_1*sum(rew[j:T])*grad_l[j]
+            step_1 = .1 / (j+1)
+            theta += step_1*sum(rew[j:T])*grad_l[j]
         print(theta)
     return theta
