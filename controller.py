@@ -1,27 +1,30 @@
 from World import *
+import numpy as np
 
 pygame.init()
 screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
 pygame.display.set_caption('Collision Avoidance')
 all_sprite_list = pygame.sprite.Group()
 wall_list = pygame.sprite.Group()
-#wall = Wall(10, 100 , 300, 25)
-#wall_list.add(wall)
-#all_sprite_list.add(wall)
-wall = Wall(10, 0, 390, 10)
+a = np.random.uniform(0,1)
+trump = Wall(10, 150 , 200, 15)
+if a < .1:
+    wall_list.add(trump)
+    all_sprite_list.add(trump)
+wall = Wall(10, 0, 290, 10)
 wall_list.add(wall)
 all_sprite_list.add(wall)
-wall = Wall(0, 0, 10, 400)
+wall = Wall(0, 0, 10, 300)
 wall_list.add(wall)
 all_sprite_list.add(wall)
-wall = Wall(10, 390, 390, 10)
+wall = Wall(10, 290, 290, 10)
 wall_list.add(wall)
 all_sprite_list.add(wall)
-wall = Wall(390, 10, 10, 380)
+wall = Wall(290, 10, 10, 280)
 wall_list.add(wall)
 all_sprite_list.add(wall)
 # Create the player paddle object
-player = Player(325, 350)
+player = Player(225, 250)
 player.walls = wall_list
 all_sprite_list.add(player)
 clock = pygame.time.Clock()
@@ -30,14 +33,6 @@ tot_reward = 0
 j=0
 
 while state != div_x+2:
-    if j==0:
-        wall = Wall(10, 100 , 300, 25)
-        wall_list.add(wall)
-        all_sprite_list.add(wall)
-    elif j==150:
-        print(j*100)
-        wall_list.remove(wall)
-        all_sprite_list.remove(wall)
 
 
     for event in pygame.event.get():

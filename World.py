@@ -77,7 +77,7 @@ class Player(pygame.sprite.Sprite):
             # the item we hit
             self.rect.y = self.start_y
             self.rect.x = self.start_x
-            self.reward = 100
+            self.reward = 500
             self.sanity = 1
             """if self.change_x > 0:
                 self.rect.right = block.rect.left
@@ -94,19 +94,19 @@ class Player(pygame.sprite.Sprite):
             # Reset our position based on the top/bottom of the object.
             self.rect.y = self.start_y
             self.rect.x = self.start_x
-            self.reward = 100
+            self.reward = 500
             self.sanity = 1
             """if self.change_y > 0:
                 self.rect.bottom = block.rect.top
             else:
                 self.rect.top = block.rect.bottom"""
+        self.state = math.floor(self.parti_y*(self.rect.y/SCREEN_HEIGHT))*self.parti_x+math.ceil(self.parti_x*(self.rect.x/SCREEN_WIDTH))
         if self.state != div_x+2 and self.sanity != 1:
             self.reward = 1
         if self.state == div_x+2:
-            self.reward = -3000
+            self.reward = 0
             self.rect.y = self.start_y
             self.rect.x = self.start_x
-        self.state = math.floor(self.parti_y*(self.rect.y/SCREEN_HEIGHT))*self.parti_x+math.ceil(self.parti_x*(self.rect.x/SCREEN_WIDTH))
         self.sanity = 0
 
 

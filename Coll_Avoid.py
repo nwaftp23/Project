@@ -4,10 +4,8 @@ from CVaR_functions import *
 
 state = math.floor(div_y*(s_y/SCREEN_HEIGHT))*div_x+math.ceil(div_y*(s_x/SCREEN_WIDTH))
 alpha = .90
-beta = 350
+beta = 300
 theta = np.zeros(n)
-theta[0::4]=.73
-theta[2::4]=.73
 w = np.random.randn(ns)
 var = 100
 lamb = np.random.randn(1)

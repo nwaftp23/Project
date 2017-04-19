@@ -53,9 +53,10 @@ def convert_act(a, player):
 
 
 def PG_CVAR(s, alpha , beta, theta, var, lamb):
-    N=2
+    N=1
     eps = 1e-2
-    for i in range(500):
+    lambmax = 50
+    for i in range(1000):
         rew_l=[]
         grad_l=[]
         for j in range(N):
@@ -70,7 +71,7 @@ def PG_CVAR(s, alpha , beta, theta, var, lamb):
             wall_list = pygame.sprite.Group()
             a = np.random.uniform(0,1)
             trump = Wall(10, 150 , 200, 15)
-            if a < .1:
+            if a <= .15:
                 wall_list.add(trump)
                 all_sprite_list.add(trump)
             wall = Wall(10, 0, 290, 10)
@@ -91,21 +92,12 @@ def PG_CVAR(s, alpha , beta, theta, var, lamb):
             all_sprite_list.add(player)
             clock = pygame.time.Clock()
             grad=np.zeros(n)
-            step_1 = .000000000001 / (i+1)
-            step_2 = .000000000001 / (i+1)**0.85
-            step_3 = .0000000000005 / (i+1)**0.7
-            lambmax = 50
+            step_1 = .001 / (i+1)
+            step_2 = .001 / (i+1)**0.85
+            step_3 = .0005 / (i+1)**0.7
             r=0
-            while state != div_x+2:
+            while state != div_x+2 and r!=500:
                 # Produces random wall after hit
-                if r == 100:
-                    a = np.random.uniform(0,1)
-                    wall_list.remove(trump)
-                    all_sprite_list.remove(trump)
-                    if a < .1:
-                        trump = Wall(10, 150 , 200, 15)
-                        wall_list.add(trump)
-                        all_sprite_list.add(trump)
                 a = softmax(theta , state)
                 vec = np.zeros(n)
                 vec[(state-1)*A:(state-1)*A+A]=a[1]
@@ -121,19 +113,17 @@ def PG_CVAR(s, alpha , beta, theta, var, lamb):
                 rew += r
             grad_l.append(grad)
             rew_l.append(rew)
-        print(rew_l)
+        print('Last Episodes cost',rew_l)
         indic=[int(r >= var) for r in rew_l]
-        step_1 = 1/((i+1)**(3/4))
         right1 = (lamb/((1-alpha)*N))*sum(indic)
         v =  lambda x: 1/2*((var-step_1*(lamb-right1))-x)**2
-        va = minimize(v, var, bounds=((-100,100),))
-        step_2 = 1/((i+1)**(4/5))
+        va = minimize(v, var)
         right2 = 1/N*sum([grad_l[i]*rew_l[i] for i in range(len(grad_l))]) + (lamb/((1-alpha)*N))*sum([grad_l[i]*(rew_l[i]-var)*indic[i] for i in range(len(grad_l))])
+        print(right2)
         t = lambda x: 1/2*np.linalg.norm(theta-step_2*right2-x,2)**2
-        bnds = tuple([(-2,2)]*n)
+        bnds = tuple([(-10,10)]*n)
         ta = minimize(t, theta, bounds=bnds)
-        step_3 = 1/((i+1))
-        right3 = var-beta+1/((1-alpha)*N)*sum([(rew_l[i]-var)*indic[i] for i in range(len(grad_l))]) 
+        right3 = var-beta+1/((1-alpha)*N)*sum([(rew_l[i]-var)*indic[i] for i in range(len(grad_l))])
         l = lambda x: 1/2*(lamb+step_3*right3-x)**2
         la = minimize(l, lamb, bounds=((0,lambmax),))
         var = va.x
@@ -141,10 +131,9 @@ def PG_CVAR(s, alpha , beta, theta, var, lamb):
         lamb = la.x
         if abs(lamb-lambmax) < eps:
             lambmax=2*lambmax
-        print(theta[0::4])
-        print(theta[1::4])
-        print(theta[2::4])
-        print(theta[3::4])
+        print('Current var',var)
+        print('Current lambda',lamb)
+        print('Current lambdamax',lambmax)
     return theta, var, lamb
 
 
