@@ -1,6 +1,9 @@
 from World import *
 import numpy as np
 
+
+s_x = 225
+s_y = 250
 pygame.init()
 screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
 pygame.display.set_caption('Collision Avoidance')
@@ -8,7 +11,7 @@ all_sprite_list = pygame.sprite.Group()
 wall_list = pygame.sprite.Group()
 a = np.random.uniform(0,1)
 trump = Wall(10, 150 , 200, 15)
-if a < .1:
+if a <= .15:
     wall_list.add(trump)
     all_sprite_list.add(trump)
 wall = Wall(10, 0, 290, 10)
@@ -24,15 +27,15 @@ wall = Wall(290, 10, 10, 280)
 wall_list.add(wall)
 all_sprite_list.add(wall)
 # Create the player paddle object
-player = Player(225, 250)
+player = Player(s_x, s_y)
 player.walls = wall_list
 all_sprite_list.add(player)
 clock = pygame.time.Clock()
 state=53
 tot_reward = 0
 j=0
-
-while state != div_x+2:
+r=0
+while state != div_x+2 and r!= 500:
 
 
     for event in pygame.event.get():
@@ -61,7 +64,7 @@ while state != div_x+2:
     state = player.state
     tot_reward +=  player.reward
     print(tot_reward)
-
+    r=player.reward
     all_sprite_list.update()
 
     screen.fill(BLACK)
