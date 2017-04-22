@@ -16,6 +16,7 @@ div_x = 6
 div_y = 6
 
 
+
 class Player(pygame.sprite.Sprite):
     """ This class represents the bar at the bottom that the player
     controls. """
@@ -77,7 +78,7 @@ class Player(pygame.sprite.Sprite):
             # the item we hit
             self.rect.y = self.start_y
             self.rect.x = self.start_x
-            self.reward = 500
+            self.reward = 50
             self.sanity = 1
             """if self.change_x > 0:
                 self.rect.right = block.rect.left
@@ -94,7 +95,7 @@ class Player(pygame.sprite.Sprite):
             # Reset our position based on the top/bottom of the object.
             self.rect.y = self.start_y
             self.rect.x = self.start_x
-            self.reward = 500
+            self.reward = 50
             self.sanity = 1
             """if self.change_y > 0:
                 self.rect.bottom = block.rect.top

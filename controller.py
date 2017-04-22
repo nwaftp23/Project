@@ -11,7 +11,7 @@ all_sprite_list = pygame.sprite.Group()
 wall_list = pygame.sprite.Group()
 a = np.random.uniform(0,1)
 trump = Wall(10, 150 , 200, 15)
-if a <= .15:
+if a <= .9:
     wall_list.add(trump)
     all_sprite_list.add(trump)
 wall = Wall(10, 0, 290, 10)

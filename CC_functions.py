@@ -9,6 +9,9 @@ ns = div_x*div_y
 n = A*(div_x*div_y)
 s_x = 225
 s_y = 250
+# random Trump wall
+trump = Wall(10, 150 , 200, 50)
+
 
 #State and Action Agregation
 def aggre(s , a):
@@ -53,7 +56,7 @@ def convert_act(a, player):
 
 
 def PG_CC(s, alpha , beta, theta, lamb):
-    N=100
+    N=1000
     eps = 1e-2
     lambmax = 1e9
     for i in range(20):
@@ -70,8 +73,7 @@ def PG_CC(s, alpha , beta, theta, lamb):
             all_sprite_list = pygame.sprite.Group()
             wall_list = pygame.sprite.Group()
             a = np.random.uniform(0,1)
-            trump = Wall(10, 150 , 200, 15)
-            if a <= .15:
+            if a <= .03:
                 wall_list.add(trump)
                 all_sprite_list.add(trump)
             wall = Wall(10, 0, 290, 10)
@@ -95,17 +97,17 @@ def PG_CC(s, alpha , beta, theta, lamb):
             step_1 = .01 / (i+1)**0.65
             step_2 = .01 / (i+1)**0.55
             r=0
-            while state != 2 and r!= 500:
+            while state != 2 and r!= 50 and rew < 2000:
                 # Produces random wall after hit
                 a = softmax(theta , state)
                 vec = np.zeros(n)
                 vec[(state-1)*A:(state-1)*A+A]=a[1]
                 grad += aggre(state,a[0])-vec
                 test=[int(r != 0) for r in aggre(state,a[0])-vec]
-                if sum(test)%4!=0:
-                    print('something is wrong')
-                    print(aggre(state,a[0])-vec)
-                    input()
+                #if sum(test)%4!=0:
+                #    print('something is wrong')
+                #    print(aggre(state,a[0])-vec)
+                #    input()
                 convert_act(a[0], player)
                 state = player.state
                 r = copy(player.reward)
@@ -113,8 +115,10 @@ def PG_CC(s, alpha , beta, theta, lamb):
                 screen.fill(BLACK)
                 all_sprite_list.draw(screen)
                 pygame.display.flip()
-                clock.tick(60)
                 rew += r
+            # penalize stuck agents
+            #if rew == 2000:
+            #    rew = rew + 1e4 
             grad_l.append(grad)
             rew_l.append(rew)
         print('Last Episodes cost',rew_l)
@@ -124,7 +128,7 @@ def PG_CC(s, alpha , beta, theta, lamb):
         #print(theta)
         #print(step_2*right2)
         #print(theta-step_2*right2)
-        bnds = tuple([(-1e8,1e8)]*n)
+        bnds = tuple([(-100,100)]*n)
         ta = minimize(t, theta, bounds=bnds)
         right3 = -beta+1/N*sum(indic)
         l = lambda x: 1/2*(lamb+step_1*right3-x)**2
@@ -142,60 +146,68 @@ def PG_CC(s, alpha , beta, theta, lamb):
 
 
 def PG(s, theta):
-    for i in range(2000):
-        grad_l=[]
-        rew=[]
-        print('Episode number', i+1)
-        state = copy(s)
-        # Call this function so the Pygame library can initialize itself
-        pygame.init()
-        screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
-        pygame.display.set_caption('Collision Avoidance')
-        all_sprite_list = pygame.sprite.Group()
-        wall_list = pygame.sprite.Group()
-        a = np.random.uniform(0,1)
-        trump = Wall(10, 150 , 200, 15)
-        if a <= .15:
-            wall_list.add(trump)
-            all_sprite_list.add(trump)
-        wall = Wall(10, 0, 290, 10)
-        wall_list.add(wall)
-        all_sprite_list.add(wall)
-        wall = Wall(0, 0, 10, 300)
-        wall_list.add(wall)
-        all_sprite_list.add(wall)
-        wall = Wall(10, 290, 290, 10)
-        wall_list.add(wall)
-        all_sprite_list.add(wall)
-        wall = Wall(290, 10, 10, 280)
-        wall_list.add(wall)
-        all_sprite_list.add(wall)
-        # Create the player paddle object
-        player = Player(s_x, s_y)
-        player.walls = wall_list
-        all_sprite_list.add(player)
-        clock = pygame.time.Clock()
-        grad=np.zeros(n)
-        r=0
-        step_1 = .00001
-        while state != 2 and r!=500:
-            a = softmax(theta , state)
-            vec = np.zeros(n)
-            vec[(state-1)*A:(state-1)*A+A]=a[1]
-            grad = aggre(state,a[0])-vec
-            convert_act(a[0], player)
-            state = player.state
-            all_sprite_list.update()
-            screen.fill(BLACK)
-            all_sprite_list.draw(screen)
-            pygame.display.flip()
-            clock.tick(60)
-            rew.append(-1*player.reward)
-            r=player.reward
-            grad_l.append(grad)
-        T = len(grad_l)
-        print(sum(rew))
+    N=1000
+    for k in range(20):
+        rew_l=[]
+        grad_l_l=[]
+        for i in range(N):
+            grad_l=[]
+            rew=[]
+            print('Episode number', N*k+i+1)
+            state = copy(s)
+            # Call this function so the Pygame library can initialize itself
+            pygame.init()
+            screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
+            pygame.display.set_caption('Collision Avoidance')
+            all_sprite_list = pygame.sprite.Group()
+            wall_list = pygame.sprite.Group()
+            a = np.random.uniform(0,1)
+            if a <= .10:
+                wall_list.add(trump)
+                all_sprite_list.add(trump)
+            wall = Wall(10, 0, 290, 10)
+            wall_list.add(wall)
+            all_sprite_list.add(wall)
+            wall = Wall(0, 0, 10, 300)
+            wall_list.add(wall)
+            all_sprite_list.add(wall)
+            wall = Wall(10, 290, 290, 10)
+            wall_list.add(wall)
+            all_sprite_list.add(wall)
+            wall = Wall(290, 10, 10, 280)
+            wall_list.add(wall)
+            all_sprite_list.add(wall)
+            # Create the player paddle object
+            player = Player(s_x, s_y)
+            player.walls = wall_list
+            all_sprite_list.add(player)
+            clock = pygame.time.Clock()
+            grad=np.zeros(n)
+            r=0
+            step_1 = .001 / (i+1)**0.55
+            while state != 2 and r!=50:
+                a = softmax(theta , state)
+                vec = np.zeros(n)
+                vec[(state-1)*A:(state-1)*A+A]=a[1]
+                grad = aggre(state,a[0])-vec
+                convert_act(a[0], player)
+                state = player.state
+                all_sprite_list.update()
+                screen.fill(BLACK)
+                all_sprite_list.draw(screen)
+                pygame.display.flip()
+                rew.append(-1*player.reward)
+                r=player.reward
+                grad_l.append(grad)
+            print(sum(rew))
+            grad_l_l.append(grad_l)
+            rew_l.append(rew)
+        T = len(grad_l_l)
         for j in range(T):
-            theta += step_1*sum(rew[j:T])*grad_l[j]
-        #print(theta)
+            rr = rew_l[j]
+            gg = grad_l_l[j]
+            TT = len(gg) 
+            for o in range(TT):
+                theta += step_1*sum(rr[o:TT])*gg[o]
+        print(theta)
     return theta
